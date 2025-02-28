@@ -298,12 +298,6 @@ $result = $stmt->get_result();
                         </a>
                     </li>
                     <li>
-                        <div class="profile-container">
-                            <span class="profile-name"><?php echo htmlspecialchars($username); ?></span>
-                            <i class="fas fa-user-circle profile-icon"></i>
-                        </div>
-                    </li>
-                    <li>
                         <a class="hover:underline" href="login.php">
                             <i class="fas fa-sign-out-alt"></i>
                         </a>
@@ -428,6 +422,7 @@ $result = $stmt->get_result();
                                     <a href="?column=waktu_submit&order=<?php echo $asc_or_desc; ?>">Waktu Submit <i
                                             class="fas fa-sort-<?php echo ($column == 'waktu_submit') ? $up_or_down : ''; ?>"></i></a>
                                 </th>
+                                <th class="py-2 px-4 border-b">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -447,7 +442,10 @@ $result = $stmt->get_result();
                                     <td class='py-2 px-4 border-b'><img src='{$row['gambar_sesudah']}' alt='Tidak ada gambar' class='w-20 h-20'></td>
                                     <td class='py-2 px-4 border-b'>{$row['waktu_submit']}</td>
                                     <td class='py-2 px-4 border-b'>
-                                        
+                                        <form method='POST' action='hapus.php' onsubmit='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\");'>
+                                            <input type='hidden' name='id' value='{$row['id']}'>
+                                            <button type='submit' class='bg-red-500 text-white px-2 py-1 rounded'>Hapus</button>
+                                        </form>
                                     </td>
                                 </tr>";
                                     $no++;
