@@ -70,26 +70,44 @@ $asc_or_desc = ($sort_order == 'ASC') ? 'desc' : 'asc';
 // Handle lokasi filter
 $selected_lokasi = isset($_GET['lokasi']) ? $_GET['lokasi'] : ''; // Inisialisasi dengan nilai default
 
+// Get total records
+$total_sql = "SELECT COUNT(*) as total FROM perangkat WHERE nama_perangkat LIKE ?";
+$total_stmt = $conn->prepare($total_sql);
+$search_param = "%" . $search . "%";
+$total_stmt->bind_param("s", $search_param);
+$total_stmt->execute();
+$total_result = $total_stmt->get_result();
+$total_row = $total_result->fetch_assoc();
+$total_records = $total_row['total'];
+
+// Define how many results you want per page
+$results_per_page = 5;
+
+// Calculate total pages
+$total_pages = ceil($total_records / $results_per_page);
+
+// Get current page from URL, if not set default to 1
+$current_page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+
+// Calculate the starting limit for the SQL query
+$start_limit = ($current_page - 1) * $results_per_page;
+
 // Create SQL query with search and lokasi filter
 $sql = "SELECT * FROM perangkat WHERE nama_perangkat LIKE ?";
 if (!empty($selected_lokasi)) {
     $sql .= " AND lokasi = ?";
 }
-$sql .= " ORDER BY $column $sort_order";
-
+$sql .= " ORDER BY $column $sort_order LIMIT ? OFFSET ?";
 $stmt = $conn->prepare($sql);
-$search_param = "%" . $search . "%";
-
 if (!empty($selected_lokasi)) {
-    $stmt->bind_param("ss", $search_param, $selected_lokasi);
+    $stmt->bind_param("ssii", $search_param, $selected_lokasi, $results_per_page, $start_limit);
 } else {
-    $stmt->bind_param("s", $search_param);
+    $stmt->bind_param("sii", $search_param, $results_per_page, $start_limit);
 }
 
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
-
 
 <head>
 
@@ -269,6 +287,31 @@ $result = $stmt->get_result();
                 min-width: 600px;
                 /* Sesuaikan dengan lebar minimal yang Anda inginkan */
             }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination a {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #4A90E2;
+            color: #4A90E2;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a.active {
+            background-color: #4A90E2;
+            color: white;
+        }
+
+        .pagination a:hover {
+            background-color: #357ABD;
+            color: white;
         }
     </style>
 </head>
@@ -458,6 +501,26 @@ $result = $stmt->get_result();
                             ?>
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination Links -->
+                <div class="pagination">
+                    <?php if ($current_page > 1): ?>
+                        <a
+                            href="?search=<?php echo urlencode($search); ?>&lokasi=<?php echo urlencode($selected_lokasi); ?>&column=<?php echo $column; ?>&order=<?php echo $sort_order; ?>&page=<?php echo $current_page - 1; ?>">«
+                            Sebelumnya</a>
+                    <?php endif; ?>
+
+                    <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                        <a href="?search=<?php echo urlencode($search); ?>&lokasi=<?php echo urlencode($selected_lokasi); ?>&column=<?php echo $column; ?>&order=<?php echo $sort_order; ?>&page=<?php echo $i; ?>"
+                            <?php if ($i == $current_page)
+                                echo 'class="active"'; ?>><?php echo $i; ?></a>
+                    <?php endfor; ?>
+
+                    <?php if ($current_page < $total_pages): ?>
+                        <a
+                            href="?search=<?php echo urlencode($search); ?>&lokasi=<?php echo urlencode($selected_lokasi); ?>&column=<?php echo $column; ?>&order=<?php echo $sort_order; ?>&page=<?php echo $current_page + 1; ?>">Selanjutnya
+                            »</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>
